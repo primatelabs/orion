@@ -1,11 +1,13 @@
-// Copyright (C) 2004-2020 Primate Labs Inc.  All Rights Reserved.
+// Copyright (c) 2004-2021 Primate Labs Inc.
+// All rights reserved.
+//
+// Use of this source code is governed by the BSD 3-Clause License that can
+// be found in the LICENSE file.
 
-#include "base/image.h"
-#include "base/image/compare.h"
-#include "base/png_codec.h"
-#include "base/sleep.h"
-#include "base/test.h"
-#include "base/timer.h"
+#include <vector>
+
+#include <gtest/gtest.h>
+
 #include "orion/pixfmt_rgba.h"
 #include "orion/rasterizer_scanline_aa.h"
 #include "orion/renderer_base.h"
@@ -43,7 +45,7 @@ public:
 
 } // namespace
 
-class OrionTest : public base::Test {
+class OrionTest : public testing::Test {
 };
 
 TEST_F(OrionTest, Smoke)
@@ -55,10 +57,12 @@ TEST_F(OrionTest, Smoke)
   PixelFormat pixel_format;
   RendererBaseType render_base;
 
-  Image<uint8_t> image(100, 100, kImageFormatRGBA);
-  assert(PixelFormat::pix_width == 4);
+  constexpr int width = 100;
+  constexpr int height = 100;
+  constexpr int channels = 4;
+  uint8_t* image = new uint8_t[width * height * channels];
 
-  render_buffer.attach(image.data(), image.width(), image.height(), image.stride());
+  render_buffer.attach(image, width, height, width * channels);
   pixel_format.attach(render_buffer);
   render_base.attach(pixel_format);
 
@@ -110,6 +114,5 @@ TEST_F(OrionTest, Smoke)
     orion::render_scanlines_aa_solid(ras, scanline, render_base, color);
   }
 
-  Image<uint8_t> reference = manager_->find_image("test/orion/smoke.png");
-  EXPECT_TRUE(base::similar(image, reference, 0));
+  delete [] image;
 }

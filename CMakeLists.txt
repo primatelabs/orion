@@ -1,6 +1,9 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 
-project(orion CXX)
+project(orion LANGUAGES CXX)
+
+include(CTest)
+enable_testing()
 
 # Soname
 # MAJOR is incremented when symbols are removed or changed in an incompatible way
@@ -160,6 +163,10 @@ set(HEADER_ORION
   include/orion/vpgen_segmentator.h
 )
 
+set(TEST_ORION
+  src/orion_test.cpp
+)
+
 set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)
 set(PROJECT_SO_VERSION ${PROJECT_MAJOR})
 
@@ -176,3 +183,39 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
 )
 
+# Tests
+
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_GetProperties(googletest)
+if(NOT googletest_POPULATED)
+  FetchContent_Populate(googletest)
+  add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
+endif()
+
+set(TEST_NAME ${PROJECT_NAME}_tests)
+
+add_executable(
+  ${TEST_NAME}
+  ${TEST_ORION}
+)
+
+set_target_properties(${TEST_NAME} PROPERTIES
+  CXX_STANDARD 14
+  C_STANDARD 99
+  PUBLIC_HEADER "${HEADER_ORION}"
+)
+
+target_link_libraries(
+  ${TEST_NAME}
+  ${PROJECT_NAME}
+  gtest_main
+)
+
+include(GoogleTest)
+gtest_discover_tests(${TEST_NAME})
